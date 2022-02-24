@@ -218,31 +218,12 @@ void UpdateTuringControls()
             = amplitudes[menuPos] > 255 ? 255 : amplitudes[menuPos];
     }
 
+
     for(int i = 0; i < 2; i++)
     {
         uint8_t length = 1 + patch.GetKnobValue(lengthControls[i]) * 16;
-        lengths[i]     = length;
-
-        if(patch.gate_input[i].Trig())
-        {
-            uint16_t value       = values[i];
-            turing[i] = patch.GetKnobValue(turingControls[i]) * 100;
-            uint16_t lastBit     = value & (0b1 << (length - 1));
-            uint16_t newBit      = lastBit >> (length - 1);
-            int randomValue = rand() % 50;
-            if(turing[i] < 98)
-            {
-                if(turing[i] < 2)
-                {
-                    newBit = newBit ^ 1;
-                }
-                else if(randomValue > abs(turing[i] - 50))
-                {
-                    newBit = rand() % 100 >= 50 ? 1 : 0;
-                }
-            }
-            values[i] = value << 1 | newBit;
-        }
+        lengths[i] = length;
+        turing[i] = patch.GetKnobValue(turingControls[i]) * 100;
     }
 }
 
@@ -286,6 +267,26 @@ void UpdateTuringOutputs()
 {
     for(int i = 0; i < 2; i++)
     {
+        if(patch.gate_input[i].Trig())
+        {
+            uint16_t value       = values[i];
+            uint16_t lastBit     = value & (0b1 << (lengths[i] - 1));
+            uint16_t newBit      = lastBit >> (lengths[i] - 1);
+            int randomValue = rand() % 50;
+            if(turing[i] < 98)
+            {
+                if(turing[i] < 2)
+                {
+                    newBit = newBit ^ 1;
+                }
+                else if(randomValue > abs(turing[i] - 50))
+                {
+                    newBit = rand() % 100 >= 50 ? 1 : 0;
+                }
+            }
+            values[i] = value << 1 | newBit;
+        }
+
         patch.seed.dac.WriteValue(cvChannels[i], mapValue(i));
     }
 }
